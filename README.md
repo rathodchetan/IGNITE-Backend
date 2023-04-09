@@ -2,7 +2,7 @@
 Begin with 
 ```npm i```
 
-include .env File with environment variables
+include .env file in same folder as index.js with environment variables
 ex: Change Values according to your database configuration values.
   ``` 
   DB_USER = "postgres"
