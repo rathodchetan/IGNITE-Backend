@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+npm-debug.log*
+
+# Build artifacts
+dist/
+build/
+*.log
+*.pid
+
+# Environment variables
+.env
+
+# IDE and editor files
+.vscode/
