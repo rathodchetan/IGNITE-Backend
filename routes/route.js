@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../services/db_connection');
 const router = express.Router()
+const fs = require('fs');
 
 // db = require('../services/db_connection');
 
@@ -96,16 +97,16 @@ router.get("/exercise", (req, res) => {
 
 // /api/exercise/:set_name: return - list(title, steps, duration, gif(binary data))
 
-//  Binary data needs to be handled!
-router.get("/exercise/:set_name", (req, res) => {
+router.get("/exercise/:set_name", (req,res) => {
     const set_name = req.params.set_name;
-    db.query('SELECT * FROM exercise_set WHERE s_title = $1', [set_name], (err, result) => {
+    db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [set_name], (err, result) => {
         if (err) {
             console.log(err);
         }
         res.send(result.rows);
     });
 });
+
 
 //  /api/chat/chats/:user_id : 
 //  return all conversation_id , user_id
