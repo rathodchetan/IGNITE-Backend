@@ -26,12 +26,14 @@ router.get("/db", (req, res) => {
 router.post("/signup", (req, res) => {
 
     const userID = req.body.id;
+    const username = req.body.username;
+    const profilepicpath = "";
     db.query('select * from user_details where userID = $1', [userID], (err, result) => {
         if (err) {
             console.log(err);
         }
-        if(!result.rows.length){
-            db.query('INSERT INTO user_details (userID) VALUES ($1)', [userID], (err, result) => {
+        if(result.rows.length==0){
+            db.query('INSERT INTO user_details (userID,username,profilepicpath) VALUES ($1,$2,$3)', [userID,username,profilepicpath], (err, result) => {
                 if (err) {
                     console.log(err);
                 }
@@ -54,14 +56,16 @@ router.post("/user/post", (req, res) => {
     const userID = req.body.userId;
     const postDescr = req.body.postDesc;
     const postDate = new Date();
+    const postImgPath = "";
 
-    db.query('INSERT INTO post (userID,postDescr,postDate) VALUES ($1, $2, $3)', [userID, postDescr, postDate], (err, result) => {
+    db.query('INSERT INTO post (userID,postDescr,postDate,postImgPath) VALUES ($1, $2, $3,$4)', [userID, postDescr, postDate, postImgPath], (err, result) => {
         if (err) {
             console.log(err);
         }
         else {
             // send the postID of the post inserted as response
-          var final = {
+
+            var final = {
             userId : userID,
             postDesc : postDescr
 
@@ -106,7 +110,7 @@ router.post("/user/subscription", (req, res) => {
 
 //1. send all posts 
 router.get("/post", (req, res) => {
-    db.query('SELECT * FROM post ORDER BY postDate', (err, result) => {
+    db.query('SELECT * FROM post,user_details where post.userID = user_details.userID ORDER BY postDate', (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -127,8 +131,9 @@ router.get("/post/:user_id", (req, res) => {
 });
 
 // 3. send all subscriptions
-router.get("/subscription", (req, res) => {
-    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price  FROM subscription', (err, result) => {
+router.get("/subscription/all/:userid", (req, res) => {
+    const user = req.params.userid;
+    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfileImagePath  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -136,7 +141,7 @@ router.get("/subscription", (req, res) => {
     });
 });
 
-// 4. send all subscriptions created by a particular user
+// 4.1. send all subscriptions created by a particular user
 
 router.get("/subscription/:userid", (req, res) => {
     const userID = req.params.userid;
@@ -147,6 +152,21 @@ router.get("/subscription/:userid", (req, res) => {
         res.send(result.rows);
     });
 });
+
+// 4.2.	Returns subscriptions of taken by user
+
+router.get("/subscription/taken/:user_id", (req, res) => {
+    const user_id = req.params.user_id;
+    db.query('SELECT * FROM subscription where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1)', [user_id], (err, result) => {
+        if (err) {
+            // console.log(err);
+            console.log(result);
+        }
+       
+        res.send(result.rows);
+    });
+});
+
 
 // 5. send all catagories and exercises under those catagories
 
@@ -246,19 +266,6 @@ router.get("/exercise/:title", (req,res) => {
 //     });
 // });
 
-// // 	Returns subscriptions of taken by user
-
-// router.get("/subscription/taken/:user_id", (req, res) => {
-//     const user_id = req.params.user_id;
-//     db.query('SELECT * FROM subscription where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1)', [user_id], (err, result) => {
-//         if (err) {
-//             // console.log(err);
-//             console.log(result);
-//         }
-       
-//         res.send(result.rows);
-//     });
-// });
 
 // ->	Returns conversations of the user
 
@@ -345,5 +352,5 @@ router.get("/exercise/:title", (req,res) => {
 // ----------------------------------------------------------------------------------------------------------------
 
 
-exports = router;
+module.exports = router;
 

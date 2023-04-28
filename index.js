@@ -2,7 +2,6 @@ const express = require('express');
 
 const app = express();
 const routes = require('./routes/route.js');
-
 var httpServer = require('http').Server(app);
 var socketServer = require('socket.io')(httpServer);
 
