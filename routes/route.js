@@ -84,6 +84,7 @@ router.post("/user/subscription", (req, res) => {
      const subscriptionDesc = req.body.subsDesc;
      const category = req.body.category;
      const price = 100;
+
  
      db.query('INSERT INTO subscription (mentorID,title,subsDescr,catagory,price) VALUES ($1, $2, $3, $4, $5)', [mentorID,subscriptionTitle,subscriptionDesc,category,price], (err, result) => {
          if (err) {
@@ -96,6 +97,8 @@ router.post("/user/subscription", (req, res) => {
                 subsDesc : subscriptionDesc,
                 category : category,
              }
+
+            res.send(final);
          }
      });
      
