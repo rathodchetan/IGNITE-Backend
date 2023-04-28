@@ -2,6 +2,37 @@ const express = require('express');
 const db = require('../services/db_connection');
 const router = express.Router()
 const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+
+const storageProfile = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const dir = './images/profile/';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+        cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, `${req.body.userId}-${file.originalname}`);
+    }
+});
+
+const storagePost = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const dir = './images/post/';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+        cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+
+const uploadProfile = multer({ storage: storageProfile });
+const uploadPost = multer({ storage: storagePost });
 
 // db = require('../services/db_connection');
 
@@ -28,6 +59,7 @@ router.post("/signup", (req, res) => {
     const userID = req.body.id;
     const username = req.body.username;
     const profilepicpath = "";
+    console.log(req.body);
     db.query('select * from user_details where userID = $1', [userID], (err, result) => {
         if (err) {
             console.log(err);
@@ -43,6 +75,29 @@ router.post("/signup", (req, res) => {
             });
         }
         else{
+            db.query('UPDATE user_details SET username = $1 WHERE userID = $2', [username,userID], (err, result) => {  
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    res.send(req.body);
+                }
+            });
+        }
+    });
+});
+
+// 1.1 post req for sign up with profile pic
+router.post("/update/profilepic", uploadProfile.single('image'), (req, res) => {
+
+    const userID = req.body.id;
+    const username = req.body.username;
+    const profilepicpath = "./" + req.file.path;
+    db.query('UPDATE user_details SET username = $1, profilepicpath = $2 WHERE userID = $3', [username,profilepicpath,userID], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
             res.send(req.body);
         }
     });
@@ -51,8 +106,7 @@ router.post("/signup", (req, res) => {
 
 2. // 	Add post to the database
 
-router.post("/user/post", (req, res) => {
-
+router.post("/user/post" , (req, res) => {
     const userID = req.body.userId;
     const postDescr = req.body.postDesc;
     const postDate = new Date();
@@ -65,6 +119,33 @@ router.post("/user/post", (req, res) => {
         else {
             // send the postID of the post inserted as response
 
+            var final = {
+            userId : userID,
+            postDesc : postDescr
+
+          }
+          res.send(final);
+        }
+    });
+});
+
+
+// 2.1 upload post with image
+router.post("/user/post/image" ,uploadPost.single('image'), (req, res) => {
+
+    console.log(req.file);
+    console.log(req.body);
+    const userID = req.body.userId;
+    const postDescr = req.body.postDesc;
+    const postDate = new Date();
+    const postImgPath = "./" + req.file.path;
+
+    db.query('INSERT INTO post (userID,postDescr,postDate,postImgPath) VALUES ($1, $2, $3,$4)', [userID, postDescr, postDate, postImgPath], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            // send the postID of the post inserted as response
             var final = {
             userId : userID,
             postDesc : postDescr
@@ -143,7 +224,7 @@ router.get("/post/:user_id", (req, res) => {
         if (err) {
             console.log(err);
         }
-        
+        res.send(result.rows);
     });
 });
 
