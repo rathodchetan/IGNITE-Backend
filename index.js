@@ -1,6 +1,8 @@
 const express = require('express');
+
 const app = express();
 const routes = require('./routes/route.js');
+
 var httpServer = require('http').Server(app);
 var socketServer = require('socket.io')(httpServer);
 
@@ -10,7 +12,7 @@ require('dotenv').config();
 
 app.use(express.json());
 app.use('/api', routes);
-app.use('/images',express.static('images/gif/'));
+app.use('/api/images/gif',express.static('images/gif/'));
 
 ip = "192.168.0.104"
 port = 3000

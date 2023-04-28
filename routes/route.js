@@ -18,22 +18,10 @@ router.get("/db", (req, res) => {
     });
 });
 
-// /api/user/:user_id : 
-// Returns {
-// user_name, emailID, profilePic }
+// -------------------------------------------------------------
 
-router.get("/user/:user_id", (req, res) => {
-    const user_id = req.params.user_id;
-    db.query('SELECT * FROM user_details WHERE userID = $1', [user_id], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        res.send(result.rows);  
-    });
-});
 
-// router.post for inserting values into user details table
-
+//1. post req for sign up
 router.post("/signup", (req, res) => {
    
     const userID = req.body.id;
@@ -50,6 +38,78 @@ router.post("/signup", (req, res) => {
         }
     });
 });
+
+// 2.  /api/home:     return Post_id, post_image, post_description,Date_time,count_of_likes,
+
+router.get("/home", (req, res) => {
+    db.query('SELECT* FROM post ORDER BY postDate', (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        res.send(result.rows);
+    });
+});
+
+// 3.get for  gives set of exercises and categories
+
+router.get("/exercise", async (req, res) => {
+    var final = {
+        "categories": [],
+        "exercises": []
+    }
+
+
+    var result = await db.query('SELECT DISTINCT s_title FROM exercise_set');
+    for(var i=0;i<result.rows.length;i++){
+        final.categories.push(result.rows[i].s_title);
+        var result2 = await db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [result.rows[i].s_title]);
+        var ex = [];
+        for(var j=0;j<result2.rows.length;j++){
+            
+            var exercise_title = result2.rows[j].title;
+            ex.push(exercise_title);
+        }
+        final.exercises.push(ex);
+    }
+    res.send(final);
+});
+
+// /api/exercise/:title: return - (title, steps, duration, gif(binary data))
+
+router.get("/exercise/:title", (req,res) => {
+    const title = req.params.title;
+    console.log(title);
+    db.query('SELECT * FROM exercise WHERE title = $1', [title], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        console.log(result.rows);
+        res.send(result.rows[0]);
+    });
+    
+});
+
+
+
+
+// -------------------------------------------------------------
+
+// /api/user/:user_id : 
+// Returns {
+// user_name, emailID, profilePic }
+
+router.get("/user/:user_id", (req, res) => {
+    const user_id = req.params.user_id;
+    db.query('SELECT * FROM user_details WHERE userID = $1', [user_id], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        res.send(result.rows);  
+    });
+});
+
+// router.post for inserting values into user details table
+
 
 
 
@@ -146,6 +206,15 @@ router.post("/user/post/comment", (req, res) => {
 // /api/subscription/:user_id:
 // 	Subscription_title, subscription_desc, category, price, count_of_userid, list_of_uid,
 
+router.get("/subscription", (req, res) => {
+    db.query('SELECT * FROM subscription', (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        res.send(result.rows);
+    });
+});
+
 router.get("/subscription/:user_id", (req, res) => {
     const user_id = req.params.user_id;
     db.query('SELECT * FROM subscription where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1)', [user_id], (err, result) => {
@@ -162,9 +231,9 @@ router.get("/subscription/:user_id", (req, res) => {
 router.post("/user/subscription", (req, res) => {
     
    // const subscriptionID = req.body.subscriptionID;
-    const mentorID = req.body.userID;
-    const subscriptionTitle = req.body.Title;
-    const subscriptionDesc = req.body.subsDescr;
+    const mentorID = req.body.mentorid;
+    const subscriptionTitle = req.body.title;
+    const subscriptionDesc = req.body.subsdescr;
     const category = req.body.catagory;
     const price = req.body.price;
 
@@ -219,40 +288,31 @@ router.post("/user/subscription/insert", (req, res) => {
 });
 
 
-// /api/home: 
-//     return Post_id, post_image, post_description,Date_time,count_of_likes,
 
-router.get("/home", (req, res) => {
-    db.query('SELECT TOP 12 * FROM post ORDER BY postDate', (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        res.send(result.rows);
-    });
-});
+// /api/exercise : Return s_title,all exercises .
 
-// /api/exercise : Return s_title .
 
-router.get("/exercise", (req, res) => {
-    db.query('SELECT DISTINCT s_title FROM exercise_set', (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        res.send(result.rows);
-    });
-});
 
-// /api/exercise/:set_name: return - list(title, steps, duration, gif(binary data))
+// router.get("/exercise", (req, res) => {
+//     db.query('SELECT DISTINCT s_title FROM exercise_set', (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         res.send(result.rows);
+//     });
+// });
 
-router.get("/exercise/:set_name", (req,res) => {
-    const set_name = req.params.set_name;
-    db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [set_name], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        res.send(result.rows);
-    });
-});
+// // /api/exercise/:set_name: return - list(title, steps, duration, gif(binary data))
+
+// router.get("/exercise/:set_name", (req,res) => {
+//     const set_name = req.params.set_name;
+//     db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [set_name], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         res.send(result.rows);
+//     });
+// });
 
 
 //  /api/chat/chats/:user_id : 
