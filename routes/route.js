@@ -18,6 +18,7 @@ router.get("/db", (req, res) => {
     });
 });
 
+// POST REQUESTS :
 // ----------------------------------------------------------------------------------------------------------------
 
 
@@ -46,104 +47,31 @@ router.post("/signup", (req, res) => {
 });
 
 
-// ----------------------------------------------------------------------------------------------------------------
+2. // 	Add post to the database
 
+router.post("/user/post", (req, res) => {
 
-// 2.  /api/home:     return Post_id, post_image, post_description,Date_time,count_of_likes,
+    const userID = req.body.userId;
+    const postDescr = req.body.postDesc;
+    const postDate = new Date();
 
-router.get("/post", (req, res) => {
-    db.query('SELECT * FROM post ORDER BY postDate', (err, result) => {
+    db.query('INSERT INTO post (userID,postDescr,postDate) VALUES ($1, $2, $3)', [userID, postDescr, postDate], (err, result) => {
         if (err) {
             console.log(err);
         }
-        res.send(result.rows);
+        else {
+            // send the postID of the post inserted as response
+          var final = {
+            userId : userID,
+            postDesc : postDescr
+
+          }
+          res.send(final);
+        }
     });
 });
 
-// ----------------------------------------------------------------------------------------------------------------
-
-
-// 3. Exercise  
-
-// get : returns set of exercises and categories
-
-router.get("/exercise", async (req, res) => {
-    var final = {
-        "categories": [],
-        "exercises": []
-    }
-
-
-    var result = await db.query('SELECT DISTINCT s_title FROM exercise_set');
-    for(var i=0;i<result.rows.length;i++){
-        final.categories.push(result.rows[i].s_title);
-        var result2 = await db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [result.rows[i].s_title]);
-        var ex = [];
-        for(var j=0;j<result2.rows.length;j++){
-            
-            var exercise_title = result2.rows[j].title;
-            ex.push(exercise_title);
-        }
-        final.exercises.push(ex);
-    }
-    res.send(final);
-});
-
-//get for a particular exercise (title, steps, duration, gifpath)
-
-router.get("/exercise/:title", (req,res) => {
-    const title = req.params.title;
-    console.log(title);
-    db.query('SELECT * FROM exercise WHERE title = $1', [title], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        console.log(result.rows);
-        res.send(result.rows[0]);
-    });
-    
-});
-
-// ----------------------------------------------------------------------------------------------------------------
-
-
-// 4. Subscription
-
-router.get("/subscription", (req, res) => {
-    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price  FROM subscription', (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        res.send(result.rows);
-    });
-});
-
-// get : 
-
-router.get("/subscription/:userid", (req, res) => {
-    const userID = req.params.userid;
-    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription where mentorid = $1',[userID], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        res.send(result.rows);
-    });
-});
-
-// // get : returns all subscriptions of a particular category
-
-// router.get("/subscription/:category", (req, res) => {
-//     const category = req.params.category;
-//     db.query('SELECT * FROM subscription WHERE category = $1 order by rating', [category], (err, result) => {
-//         if (err) {
-//             console.log(err);
-//         }
-//         res.send(result.rows);
-//     });
-// });
-
-// add subscription to database 
-
+// 3. Add subscription to the database
 router.post("/user/subscription", (req, res) => {
     
     // const subscriptionID = req.body.subscriptionID;
@@ -169,52 +97,25 @@ router.post("/user/subscription", (req, res) => {
      
  });
 
-// 	Add subscription taken by user to the database and 
-//  Create a conversation between mentor and user
+// ----------------------------------------------------------------------------------------------------------------
 
 
-router.post("/user/subscription/insert", (req, res) => {
 
-    const subscriptionID = req.body.subscriptionID;
-    const userID = req.body.userID;
-    var default_rating = 5;
+// GET REQUESTS :
+// ----------------------------------------------------------------------------------------------------------------
 
-    db.query('INSERT INTO user_subscription (subscriptionID,userID,userRating) VALUES ($1, $2,$3)', [subscriptionID, userID, default_rating], (err, result) => {
+//1. send all posts 
+router.get("/post", (req, res) => {
+    db.query('SELECT * FROM post ORDER BY postDate', (err, result) => {
         if (err) {
             console.log(err);
         }
-        else {
-            // find mentorID from subscriptionID
-            console.log("subscribed");
-            db.query('SELECT mentorID FROM subscription WHERE subscriptionID = $1', [subscriptionID], (err, result) => {
-                if (err) {
-                    console.log(err);
-                }
-                else {
-                    const mentorID = result.rows[0].mentorID;
-                    // create conversation between mentor and user
-                    db.query('INSERT INTO conversation (mentorID,userID) VALUES ($1, $2)', [mentorID, userID], (err, result) => {
-                        if (err) {
-                            console.log(err);
-                        }
-                        else {
-                            res.send('conversation created successfully b/w', mentorID, 'and', userID);
-                        }
-                    });
-                }
-            });
-
-        }
+        res.send(result.rows);
     });
-
 });
 
+//2. send all posts of a particular user
 
-// ----------------------------------------------------------------------------------------------------------------
-
-// 5. User Profile
-
-// 	Returns posts of the user
 router.get("/post/:user_id", (req, res) => {
     const user_id = req.params.user_id;
     db.query('SELECT * FROM post WHERE userID = $1', [user_id], (err, result) => {
@@ -225,10 +126,9 @@ router.get("/post/:user_id", (req, res) => {
     });
 });
 
-// 	Returns comments of the post
-router.get("/post/comments/:post_id", (req, res) => {
-    const post_id = req.params.post_id;
-    db.query('SELECT * FROM comment WHERE postID = $1', [post_id], (err, result) => {
+// 3. send all subscriptions
+router.get("/subscription", (req, res) => {
+    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price  FROM subscription', (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -236,25 +136,11 @@ router.get("/post/comments/:post_id", (req, res) => {
     });
 });
 
-// 	Returns subscriptions of taken by user
+// 4. send all subscriptions created by a particular user
 
-router.get("/subscription/taken/:user_id", (req, res) => {
-    const user_id = req.params.user_id;
-    db.query('SELECT * FROM subscription where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1)', [user_id], (err, result) => {
-        if (err) {
-            // console.log(err);
-            console.log(result);
-        }
-       
-        res.send(result.rows);
-    });
-});
-
-// 	Returns conversations of the user
-
-router.get("/chat/chats/:user_id", (req, res) => {
-    const user_id = req.params.user_id;
-    db.query('SELECT * FROM conversation WHERE userID1 = $1 or userID2 = $1', [user_id], (err, result) => {
+router.get("/subscription/:userid", (req, res) => {
+    const userID = req.params.userid;
+    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription where mentorid = $1',[userID], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -262,144 +148,202 @@ router.get("/chat/chats/:user_id", (req, res) => {
     });
 });
 
-// Returns messages of the conversation
-router.get("/chat/conversation/:conversation_id", (req, res) => {
-    const conversation_id = req.params.conversation_id;
-    db.query('SELECT * FROM message WHERE conversationID = $1 order by messageDate', [conversation_id], (err, result) => {
+// 5. send all catagories and exercises under those catagories
+
+router.get("/exercise", async (req, res) => {
+    var final = {
+        "categories": [],
+        "exercises": []
+    }
+
+
+    var result = await db.query('SELECT DISTINCT s_title FROM exercise_set');
+    for(var i=0;i<result.rows.length;i++){
+        final.categories.push(result.rows[i].s_title);
+        var result2 = await db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [result.rows[i].s_title]);
+        var ex = [];
+        for(var j=0;j<result2.rows.length;j++){
+            
+            var exercise_title = result2.rows[j].title;
+            ex.push(exercise_title);
+        }
+        final.exercises.push(ex);
+    }
+    res.send(final);
+});
+
+// 6. send for a particular exercise (title, steps, duration, gifpath)
+
+router.get("/exercise/:title", (req,res) => {
+    const title = req.params.title;
+    console.log(title);
+    db.query('SELECT * FROM exercise WHERE title = $1', [title], (err, result) => {
         if (err) {
             console.log(err);
         }
-        res.send(result.rows);
+        console.log(result.rows);
+        res.send(result.rows[0]);
     });
+    
 });
-
-// Add message of a convo to the database
-
-
-router.post("/chat/conversation.sendmessage", (req, res) => {
-    const conversationID = req.body.conversationID;
-    const userID = req.body.userID;
-    const messageDesc = req.body.messageDesc;
-    const messageDate = new Date();
-
-    db.query('INSERT INTO message (conversationID,userID,messageDesc,messageDate) VALUES ($1, $2, $3, $4)', [conversationID, userID, messageDesc, messageDate], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            res.send('message inserted successfully');
-        }
-    });
-
-});
-
 
 // ----------------------------------------------------------------------------------------------------------------
+
+
+// GET/POST REQUESTS HELPFUL IN FUTURE:
+
+// ->	Add subscription taken by user to the database and 
+//      Create a conversation between mentor and user
+
+
+// router.post("/user/subscription/insert", (req, res) => {
+
+//     const subscriptionID = req.body.subscriptionID;
+//     const userID = req.body.userID;
+//     var default_rating = 5;
+
+//     db.query('INSERT INTO user_subscription (subscriptionID,userID,userRating) VALUES ($1, $2,$3)', [subscriptionID, userID, default_rating], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         else {
+//             // find mentorID from subscriptionID
+//             console.log("subscribed");
+//             db.query('SELECT mentorID FROM subscription WHERE subscriptionID = $1', [subscriptionID], (err, result) => {
+//                 if (err) {
+//                     console.log(err);
+//                 }
+//                 else {
+//                     const mentorID = result.rows[0].mentorID;
+//                     // create conversation between mentor and user
+//                     db.query('INSERT INTO conversation (mentorID,userID) VALUES ($1, $2)', [mentorID, userID], (err, result) => {
+//                         if (err) {
+//                             console.log(err);
+//                         }
+//                         else {
+//                             res.send('conversation created successfully b/w', mentorID, 'and', userID);
+//                         }
+//                     });
+//                 }
+//             });
+
+//         }
+//     });
+
+// });
+
+
+// -> User Profile
+
+// 	->Returns comments of the post
+// router.get("/post/comments/:post_id", (req, res) => {
+//     const post_id = req.params.post_id;
+//     db.query('SELECT * FROM comment WHERE postID = $1', [post_id], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         res.send(result.rows);
+//     });
+// });
+
+// // 	Returns subscriptions of taken by user
+
+// router.get("/subscription/taken/:user_id", (req, res) => {
+//     const user_id = req.params.user_id;
+//     db.query('SELECT * FROM subscription where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1)', [user_id], (err, result) => {
+//         if (err) {
+//             // console.log(err);
+//             console.log(result);
+//         }
+       
+//         res.send(result.rows);
+//     });
+// });
+
+// ->	Returns conversations of the user
+
+// router.get("/chat/chats/:user_id", (req, res) => {
+//     const user_id = req.params.user_id;
+//     db.query('SELECT * FROM conversation WHERE userID1 = $1 or userID2 = $1', [user_id], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         res.send(result.rows);
+//     });
+// });
+
+// ->Returns messages of the conversation
+// router.get("/chat/conversation/:conversation_id", (req, res) => {
+//     const conversation_id = req.params.conversation_id;
+//     db.query('SELECT * FROM message WHERE conversationID = $1 order by messageDate', [conversation_id], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         res.send(result.rows);
+//     });
+// });
+
+// ->Add message of a convo to the database
+
+
+// router.post("/chat/conversation.sendmessage", (req, res) => {
+//     const conversationID = req.body.conversationID;
+//     const userID = req.body.userID;
+//     const messageDesc = req.body.messageDesc;
+//     const messageDate = new Date();
+
+//     db.query('INSERT INTO message (conversationID,userID,messageDesc,messageDate) VALUES ($1, $2, $3, $4)', [conversationID, userID, messageDesc, messageDate], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         else {
+//             res.send('message inserted successfully');
+//         }
+//     });
+
+// });
+
 
 // 6. Post
 
-// 	Add post to the database
 
-router.post("/user/post", (req, res) => {
+// ->Add like to the database
 
-    const userID = req.body.userId;
-    const postDescr = req.body.postDesc;
-    const postDate = new Date();
+// router.post("user/post/like", (req, res) => {
+//     const postID = req.body.postID;
+//     const userID = req.body.userID;
 
-    db.query('INSERT INTO post (userID,postDescr,postDate) VALUES ($1, $2, $3)', [userID, postDescr, postDate], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            // send the postID of the post inserted as response
-          var final = {
-            userId : userID,
-            postDesc : postDescr
+//     db.query('INSERT INTO likes (postID,userID) VALUES ($1, $2)', [postID, userID], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         else {
+//             res.send('like inserted successfully');
+//         }
+//     });
+// });
 
-          }
-          res.send(final);
-        }
-    });
-});
+// ->Add comment to the database
 
-// Add like to the database
+// router.post("/user/post/comment", (req, res) => {
+//     const postID = req.body.postID;
+//     const userID = req.body.userID;
+//     const commentDescr = req.body.commentDescr;
+//     const commentDate = new Date();
 
-router.post("user/post/like", (req, res) => {
-    const postID = req.body.postID;
-    const userID = req.body.userID;
-
-    db.query('INSERT INTO likes (postID,userID) VALUES ($1, $2)', [postID, userID], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            res.send('like inserted successfully');
-        }
-    });
-});
-
-// Add comment to the database
-
-router.post("/user/post/comment", (req, res) => {
-    const postID = req.body.postID;
-    const userID = req.body.userID;
-    const commentDescr = req.body.commentDescr;
-    const commentDate = new Date();
-
-    db.query('INSERT INTO comment (postID,userID,commentDescr,commentDate) VALUES ($1, $2, $3, $4)', [postID, userID, commentDescr, commentDate], (err, result) => {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            res.send('comment inserted successfully');
-        }
-    });
-});
+//     db.query('INSERT INTO comment (postID,userID,commentDescr,commentDate) VALUES ($1, $2, $3, $4)', [postID, userID, commentDescr, commentDate], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         else {
+//             res.send('comment inserted successfully');
+//         }
+//     });
+// });
 
 
 // ----------------------------------------------------------------------------------------------------------------
 
 
-// router.get("/exercise", (req, res) => {
-//     db.query('SELECT DISTINCT s_title FROM exercise_set', (err, result) => {
-//         if (err) {
-//             console.log(err);
-//         }
-//         res.send(result.rows);
-//     });
-// });
-
-// // /api/exercise/:set_name: return - list(title, steps, duration, gif(binary data))
-
-// router.get("/exercise/:set_name", (req,res) => {
-//     const set_name = req.params.set_name;
-//     db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [set_name], (err, result) => {
-//         if (err) {
-//             console.log(err);
-//         }
-//         res.send(result.rows);
-//     });
-// });
-
-// router.get("/exercise", (req, res) => {
-//     db.query('SELECT DISTINCT s_title FROM exercise_set', (err, result) => {
-//         if (err) {
-//             console.log(err);
-//         }
-//         res.send(result.rows);
-//     });
-// });
-
-// // /api/exercise/:set_name: return - list(title, steps, duration, gif(binary data))
-
-// router.get("/exercise/:set_name", (req,res) => {
-//     const set_name = req.params.set_name;
-//     db.query('SELECT * FROM exercise WHERE title IN (SELECT e_title FROM exercise_set where s_title = $1)', [set_name], (err, result) => {
-//         if (err) {
-//             console.log(err);
-//         }
-//         res.send(result.rows);
-//     });
-// });
-module.exports = router;
+exports = router;
 
