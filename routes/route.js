@@ -57,14 +57,14 @@ router.get("/db", (req, res) => {
 router.post("/signup", (req, res) => {
 
     const userID = req.body.id;
-    const username = req.body.username;
-    const profilepicpath = "";
-    console.log(req.body);
+    const username = req.body.name;
+    const profilepicpath = '\'\'';
     db.query('select * from user_details where userID = $1', [userID], (err, result) => {
         if (err) {
             console.log(err);
         }
         if(result.rows.length==0){
+            console.log(`INSERT INTO user_details (userID,username,profilepicpath) VALUES (${userID},${username},${profilepicpath})`);
             db.query('INSERT INTO user_details (userID,username,profilepicpath) VALUES ($1,$2,$3)', [userID,username,profilepicpath], (err, result) => {
                 if (err) {
                     console.log(err);
@@ -110,7 +110,7 @@ router.post("/user/post" , (req, res) => {
     const userID = req.body.userId;
     const postDescr = req.body.postDesc;
     const postDate = new Date();
-    const postImgPath = "";
+    const postImgPath = '\"\"';
 
     db.query('INSERT INTO post (userID,postDescr,postDate,postImgPath) VALUES ($1, $2, $3,$4)', [userID, postDescr, postDate, postImgPath], (err, result) => {
         if (err) {
@@ -206,7 +206,7 @@ router.get("/post", (req, res) => {
 
 router.get("/post/:user_id", (req, res) => {
     const user_id = req.params.user_id;
-    db.query('SELECT * FROM post WHERE userID = $1', [user_id], (err, result) => {
+    db.query('SELECT * FROM post,user_details WHERE post.userID = $1 and user_details.userID = $1', [user_id], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -217,7 +217,7 @@ router.get("/post/:user_id", (req, res) => {
 // 3. send all subscriptions
 router.get("/subscription/all/:userid", (req, res) => {
     const user = req.params.userid;
-    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfileImagePath  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
+    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfilePic  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -229,7 +229,7 @@ router.get("/subscription/all/:userid", (req, res) => {
 
 router.get("/subscription/:userid", (req, res) => {
     const userID = req.params.userid;
-    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription where mentorid = $1',[userID], (err, result) => {
+    db.query('SELECT ProfilePicPath as mentorProfilePic,userName as mentorName,mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription,user_details where mentorid = $1 and user_details.userId = $1',[userID], (err, result) => {
         if (err) {
             console.log(err);
         }
