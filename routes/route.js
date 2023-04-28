@@ -58,13 +58,13 @@ router.post("/signup", (req, res) => {
 
     const userID = req.body.id;
     const username = req.body.name;
-    const profilepicpath = '\'\'';
+    const profilepicpath = '';
     db.query('select * from user_details where userID = $1', [userID], (err, result) => {
         if (err) {
             console.log(err);
         }
         if(result.rows.length==0){
-            console.log(`INSERT INTO user_details (userID,username,profilepicpath) VALUES (${userID},${username},${profilepicpath})`);
+            
             db.query('INSERT INTO user_details (userID,username,profilepicpath) VALUES ($1,$2,$3)', [userID,username,profilepicpath], (err, result) => {
                 if (err) {
                     console.log(err);
@@ -110,7 +110,7 @@ router.post("/user/post" , (req, res) => {
     const userID = req.body.userId;
     const postDescr = req.body.postDesc;
     const postDate = new Date();
-    const postImgPath = '\"\"';
+    const postImgPath = '';
 
     db.query('INSERT INTO post (userID,postDescr,postDate,postImgPath) VALUES ($1, $2, $3,$4)', [userID, postDescr, postDate, postImgPath], (err, result) => {
         if (err) {
