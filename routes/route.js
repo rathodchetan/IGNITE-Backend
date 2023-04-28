@@ -111,6 +111,20 @@ router.post("/user/subscription", (req, res) => {
 // GET REQUESTS :
 // ----------------------------------------------------------------------------------------------------------------
 
+// 0. send userprofilepicpath given id
+
+router.get("/user/profilepic/:userid", (req, res) => {
+    const user_id = req.params.userid;
+    db.query('SELECT profilepicpath FROM user_details WHERE userID = $1', [user_id], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        res.send(result.rows);
+    });
+});
+
+
+
 //1. send all posts 
 router.get("/post", (req, res) => {
     db.query('SELECT * FROM post,user_details where post.userID = user_details.userID ORDER BY postDate', (err, result) => {
