@@ -25,27 +25,34 @@ router.get("/db", (req, res) => {
 router.post("/signup", (req, res) => {
 
     const userID = req.body.id;
-    const response = {
-        status: "success",
-    }
-    console.log(req.body)
-    db.query('INSERT INTO user_details (userID) VALUES ($1)', [userID], (err, result) => {
+    db.query('select * from user_details where userID = $1', [userID], (err, result) => {
         if (err) {
             console.log(err);
         }
-        else {
-            res.send(response);
+        if(!result.rows.length){
+            db.query('INSERT INTO user_details (userID) VALUES ($1)', [userID], (err, result) => {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    res.send(req.body);
+                }
+            });
+        }
+        else{
+            res.send(req.body);
         }
     });
 });
+
 
 // ----------------------------------------------------------------------------------------------------------------
 
 
 // 2.  /api/home:     return Post_id, post_image, post_description,Date_time,count_of_likes,
 
-router.get("/home", (req, res) => {
-    db.query('SELECT* FROM post ORDER BY postDate', (err, result) => {
+router.get("/post", (req, res) => {
+    db.query('SELECT * FROM post ORDER BY postDate', (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -102,12 +109,8 @@ router.get("/exercise/:title", (req,res) => {
 
 // 4. Subscription
 
-
-
-// get :  returns {catagories of subscription}
-
-router.get("/subscription/", (req, res) => {
-    db.query('SELECT DISTINCT category FROM subscription', (err, result) => {
+router.get("/subscription", (req, res) => {
+    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price  FROM subscription', (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -115,20 +118,60 @@ router.get("/subscription/", (req, res) => {
     });
 });
 
-// get : returns all subscriptions of a particular category
+// get : 
 
-router.get("/subscription/:category", (req, res) => {
-    const category = req.params.category;
-    db.query('SELECT * FROM subscription WHERE category = $1 order by rating', [category], (err, result) => {
+router.get("/subscription/:userid", (req, res) => {
+    const userID = req.params.userid;
+    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription where mentorid = $1',[userID], (err, result) => {
         if (err) {
             console.log(err);
         }
         res.send(result.rows);
     });
 });
+
+// // get : returns all subscriptions of a particular category
+
+// router.get("/subscription/:category", (req, res) => {
+//     const category = req.params.category;
+//     db.query('SELECT * FROM subscription WHERE category = $1 order by rating', [category], (err, result) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         res.send(result.rows);
+//     });
+// });
+
+// add subscription to database 
+
+router.post("/user/subscription", (req, res) => {
+    
+    // const subscriptionID = req.body.subscriptionID;
+     const mentorID = req.body.mentorId;
+     const subscriptionTitle = req.body.title;
+     const subscriptionDesc = req.body.subsDesc;
+     const category = req.body.category;
+     const price = 100;
+ 
+     db.query('INSERT INTO subscription (mentorID,title,subsDescr,catagory,price) VALUES ($1, $2, $3, $4, $5)', [mentorID,subscriptionTitle,subscriptionDesc,category,price], (err, result) => {
+         if (err) {
+             console.log(err);
+         }
+         else{
+             var final = {
+                mentorId : mentorID,
+                title : subscriptionTitle,
+                subsDesc : subscriptionDesc,
+                category : category,
+             }
+         }
+     });
+     
+ });
 
 // 	Add subscription taken by user to the database and 
 //  Create a conversation between mentor and user
+
 
 router.post("/user/subscription/insert", (req, res) => {
 
@@ -172,13 +215,13 @@ router.post("/user/subscription/insert", (req, res) => {
 // 5. User Profile
 
 // 	Returns posts of the user
-router.get("/post/user_details/:user_id", (req, res) => {
+router.get("/post/:user_id", (req, res) => {
     const user_id = req.params.user_id;
     db.query('SELECT * FROM post WHERE userID = $1', [user_id], (err, result) => {
         if (err) {
             console.log(err);
         }
-        res.send(result.rows);
+        
     });
 });
 
@@ -193,14 +236,16 @@ router.get("/post/comments/:post_id", (req, res) => {
     });
 });
 
-// 	Returns subscriptions of the user
+// 	Returns subscriptions of taken by user
 
-router.get("/subscription/:user_id", (req, res) => {
+router.get("/subscription/taken/:user_id", (req, res) => {
     const user_id = req.params.user_id;
     db.query('SELECT * FROM subscription where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1)', [user_id], (err, result) => {
         if (err) {
-            console.log(err);
+            // console.log(err);
+            console.log(result);
         }
+       
         res.send(result.rows);
     });
 });
@@ -257,8 +302,8 @@ router.post("/chat/conversation.sendmessage", (req, res) => {
 
 router.post("/user/post", (req, res) => {
 
-    const userID = req.body.userID;
-    const postDescr = req.body.postDescr;
+    const userID = req.body.userId;
+    const postDescr = req.body.postDesc;
     const postDate = new Date();
 
     db.query('INSERT INTO post (userID,postDescr,postDate) VALUES ($1, $2, $3)', [userID, postDescr, postDate], (err, result) => {
@@ -267,12 +312,12 @@ router.post("/user/post", (req, res) => {
         }
         else {
             // send the postID of the post inserted as response
-            db.query('SELECT postID FROM post WHERE userID = $1 AND postDescr = $2 AND postDate = $3', [userID, postDescr, postDate], (err, result) => {
-                if (err) {
-                    console.log(err);
-                }
-                res.send(result.rows);
-            });
+          var final = {
+            userId : userID,
+            postDesc : postDescr
+
+          }
+          res.send(final);
         }
     });
 });
