@@ -119,7 +119,7 @@ router.get("/user/profilepic/:userid", (req, res) => {
         if (err) {
             console.log(err);
         }
-        res.send(result.rows);
+        res.send(result.rows[0]);
     });
 });
 
