@@ -301,7 +301,70 @@ router.get("/exercise/:title", (req,res) => {
     
 });
 
+// Delete Requests
 // ----------------------------------------------------------------------------------------------------------------
+
+
+// 1. delete a post given postID and userID
+
+router.delete("/post/delete/", (req, res) => {
+    const postID = req.body.postId;
+    const userID = req.body.userId;
+    // delete postimg corresponding to postID using postimgpath from /images/post folder
+
+    db.query ('SELECT postimgpath FROM post WHERE postID = $1', [postID], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            var postimgpath = "./" + result.rows[0].postimgpath;
+            console.log(postimgpath);
+            fs.unlink(postimgpath);
+        }
+    });
+
+    
+    db.query('DELETE FROM post WHERE postID = $1 AND userID = $2', [postID, userID], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            res.send(result);
+        }
+    });
+});
+
+// 2. delete a subscription given subscriptionID and userID
+
+router.delete("/subscription/delete/", (req, res) => {
+    const subscriptionID = req.body.subscriptionID;
+    const userID = req.body.mentorId;
+
+    db.query('DELETE FROM subscription WHERE subscriptionID = $1 AND mentorID = $2', [subscriptionID, userID], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            res.send(req.body);
+        }
+    });
+});
+
+// 3. delete a subscription taken by user given subscriptionID and userID
+
+router.delete("/subscription/taken/delete/", (req, res) => {
+    const subscriptionID = req.body.subscriptionID;
+    const userID = req.body.userID;
+
+    db.query('DELETE FROM user_subscription WHERE subscriptionID = $1 AND userID = $2', [subscriptionID, userID], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            res.send(req.body);
+        }
+    });
+});
 
 
 // GET/POST REQUESTS HELPFUL IN FUTURE:
