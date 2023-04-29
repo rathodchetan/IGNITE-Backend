@@ -14,7 +14,7 @@ const storageProfile = multer.diskStorage({
         cb(null, dir);
     },
     filename: function (req, file, cb) {
-        cb(null, `${req.body.userId}-${file.originalname}`);
+        cb(null, `${Date.now()}-${file.originalname}`);
     }
 });
 
@@ -89,16 +89,15 @@ router.post("/signup", (req, res) => {
 
 // 1.1 post req for sign up with profile pic
 router.post("/update/profilepic", uploadProfile.single('image'), (req, res) => {
-
-    const userID = req.body.id;
-    const username = req.body.username;
+    console.log(req.file);
+    const userID = req.body.userId;
     const profilepicpath = "./" + req.file.path;
-    db.query('UPDATE user_details SET username = $1, profilepicpath = $2 WHERE userID = $3', [username,profilepicpath,userID], (err, result) => {
+    db.query('UPDATE user_details SET profilepicpath = $1 WHERE userID = $2', [profilepicpath,userID], (err, result) => {
         if (err) {
             console.log(err);
         }
         else {
-            res.send(req.body);
+            res.send({profilepicpath:profilepicpath});
         }
     });
 });
@@ -248,7 +247,7 @@ router.get("/post/:user_id", (req, res) => {
 // 3. send all subscriptions
 router.get("/subscription/all/:userid", (req, res) => {
     const user = req.params.userid;
-    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfilePic  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
+    db.query('SELECT subscriptionid as subsid, mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfilePic  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -260,7 +259,7 @@ router.get("/subscription/all/:userid", (req, res) => {
 
 router.get("/subscription/:userid", (req, res) => {
     const userID = req.params.userid;
-    db.query('SELECT ProfilePicPath as mentorProfilePic,userName as mentorName,mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription,user_details where mentorid = $1 and user_details.userId = $1',[userID], (err, result) => {
+    db.query('SELECT subscriptionid as subsid,ProfilePicPath as mentorProfilePic,userName as mentorName,mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription,user_details where mentorid = $1 and user_details.userId = $1',[userID], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -329,9 +328,9 @@ router.get("/exercise/:title", (req,res) => {
 
 // 1. delete a post given postID and userID
 
-router.delete("/post/delete/", (req, res) => {
-    const postID = req.body.postId;
-    const userID = req.body.userId;
+router.delete("/post/delete/:postId/:userId", (req, res) => {
+    const postID = req.params.postId;
+    const userID = req.params.userId;
     // delete postimg corresponding to postID using postimgpath from /images/post folder
 
     db.query ('SELECT postimgpath FROM post WHERE postID = $1', [postID], (err, result) => {
@@ -341,7 +340,6 @@ router.delete("/post/delete/", (req, res) => {
         else {
             var postimgpath = "./" + result.rows[0].postimgpath;
             console.log(postimgpath);
-            fs.unlink(postimgpath);
         }
     });
 
@@ -358,9 +356,9 @@ router.delete("/post/delete/", (req, res) => {
 
 // 2. delete a subscription given created by userID subscriptionID and userID
 
-router.delete("/subscription/delete/", (req, res) => {
-    const subscriptionID = req.body.subscriptionID;
-    const userID = req.body.mentorId;
+router.delete("/subscription/delete/:subsId/:userId", (req, res) => {
+    const subscriptionID = req.params.subsId;
+    const userID = req.params.userId;
 
     db.query('DELETE FROM subscription WHERE subscriptionID = $1 AND mentorID = $2', [subscriptionID, userID], (err, result) => {
         if (err) {
