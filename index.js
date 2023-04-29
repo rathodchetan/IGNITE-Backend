@@ -15,7 +15,7 @@ app.use('/api/images/gif',express.static('images/gif/'));
 app.use('/api/images/post',express.static('images/post/'));
 app.use('/api/images/profile',express.static('images/profile/'));
 
-ip = "192.168.0.7"
+ip = "192.168.1.103"
 port = 3000
 
 // app.listen(3000, () => {

@@ -306,9 +306,9 @@ router.get("/exercise/:title", (req,res) => {
 
 // 1. delete a post given postID and userID
 
-router.delete("/post/delete/", (req, res) => {
-    const postID = req.body.postId;
-    const userID = req.body.userId;
+router.delete("/post/delete/:postId/:userId", (req, res) => {
+    const postID = req.params.postId;
+    const userID = req.params.userId;
     // delete postimg corresponding to postID using postimgpath from /images/post folder
 
     db.query ('SELECT postimgpath FROM post WHERE postID = $1', [postID], (err, result) => {
@@ -318,7 +318,6 @@ router.delete("/post/delete/", (req, res) => {
         else {
             var postimgpath = "./" + result.rows[0].postimgpath;
             console.log(postimgpath);
-            fs.unlink(postimgpath);
         }
     });
 
@@ -335,9 +334,9 @@ router.delete("/post/delete/", (req, res) => {
 
 // 2. delete a subscription given subscriptionID and userID
 
-router.delete("/subscription/delete/", (req, res) => {
-    const subscriptionID = req.body.subscriptionID;
-    const userID = req.body.mentorId;
+router.delete("/subscription/delete/:subsId/:userId", (req, res) => {
+    const subscriptionID = req.params.subsId;
+    const userID = req.params.userId;
 
     db.query('DELETE FROM subscription WHERE subscriptionID = $1 AND mentorID = $2', [subscriptionID, userID], (err, result) => {
         if (err) {
@@ -351,7 +350,7 @@ router.delete("/subscription/delete/", (req, res) => {
 
 // 3. delete a subscription taken by user given subscriptionID and userID
 
-router.delete("/subscription/taken/delete/", (req, res) => {
+router.delete("/subscription/taken/delete", (req, res) => {
     const subscriptionID = req.body.subscriptionID;
     const userID = req.body.userID;
 
