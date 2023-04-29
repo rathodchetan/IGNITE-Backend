@@ -185,6 +185,27 @@ router.post("/user/subscription", (req, res) => {
      
  });
 
+ // 3. add user subscribed to a subscription
+
+ router.post("/subscribe", (req, res) => {
+
+    const subscriptionID = req.body.subscriptionId;
+    const userID = req.body.userId;
+    var default_rating = 5;
+
+    db.query('INSERT INTO user_subscription (subscriptionID,userID,userRating) VALUES ($1, $2,$3)', [subscriptionID, userID, default_rating], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+          
+            res.send(req.body);
+        }
+    });
+
+});
+
+
 // ----------------------------------------------------------------------------------------------------------------
 
 
@@ -262,6 +283,7 @@ router.get("/subscription/taken/:user_id", (req, res) => {
 });
 
 
+
 // 5. send all catagories and exercises under those catagories
 
 router.get("/exercise", async (req, res) => {
@@ -334,7 +356,7 @@ router.delete("/post/delete/", (req, res) => {
     });
 });
 
-// 2. delete a subscription given subscriptionID and userID
+// 2. delete a subscription given created by userID subscriptionID and userID
 
 router.delete("/subscription/delete/", (req, res) => {
     const subscriptionID = req.body.subscriptionID;
@@ -352,11 +374,11 @@ router.delete("/subscription/delete/", (req, res) => {
 
 // 3. delete a subscription taken by user given subscriptionID and userID
 
-router.delete("/subscription/taken/delete/", (req, res) => {
-    const subscriptionID = req.body.subscriptionID;
-    const userID = req.body.userID;
+router.delete("/unsubscribe", (req, res) => {
+    const subscriptionID = req.body.subscriptionId;
+    const userID = req.body.userId;
 
-    db.query('DELETE FROM user_subscription WHERE subscriptionID = $1 AND userID = $2', [subscriptionID, userID], (err, result) => {
+    db.query('DELETE FROM user_subscription WHERE subscriptionId = $1 AND userID = $2', [subscriptionID, userID], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -373,41 +395,6 @@ router.delete("/subscription/taken/delete/", (req, res) => {
 //      Create a conversation between mentor and user
 
 
-// router.post("/user/subscription/insert", (req, res) => {
-
-//     const subscriptionID = req.body.subscriptionID;
-//     const userID = req.body.userID;
-//     var default_rating = 5;
-
-//     db.query('INSERT INTO user_subscription (subscriptionID,userID,userRating) VALUES ($1, $2,$3)', [subscriptionID, userID, default_rating], (err, result) => {
-//         if (err) {
-//             console.log(err);
-//         }
-//         else {
-//             // find mentorID from subscriptionID
-//             console.log("subscribed");
-//             db.query('SELECT mentorID FROM subscription WHERE subscriptionID = $1', [subscriptionID], (err, result) => {
-//                 if (err) {
-//                     console.log(err);
-//                 }
-//                 else {
-//                     const mentorID = result.rows[0].mentorID;
-//                     // create conversation between mentor and user
-//                     db.query('INSERT INTO conversation (mentorID,userID) VALUES ($1, $2)', [mentorID, userID], (err, result) => {
-//                         if (err) {
-//                             console.log(err);
-//                         }
-//                         else {
-//                             res.send('conversation created successfully b/w', mentorID, 'and', userID);
-//                         }
-//                     });
-//                 }
-//             });
-
-//         }
-//     });
-
-// });
 
 
 // -> User Profile
