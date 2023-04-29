@@ -14,7 +14,7 @@ const storageProfile = multer.diskStorage({
         cb(null, dir);
     },
     filename: function (req, file, cb) {
-        cb(null, `${req.body.userId}-${file.originalname}`);
+        cb(null, `${Date.now()}-${file.originalname}`);
     }
 });
 
@@ -89,16 +89,15 @@ router.post("/signup", (req, res) => {
 
 // 1.1 post req for sign up with profile pic
 router.post("/update/profilepic", uploadProfile.single('image'), (req, res) => {
-
-    const userID = req.body.id;
-    const username = req.body.username;
+    console.log(req.file);
+    const userID = req.body.userId;
     const profilepicpath = "./" + req.file.path;
-    db.query('UPDATE user_details SET username = $1, profilepicpath = $2 WHERE userID = $3', [username,profilepicpath,userID], (err, result) => {
+    db.query('UPDATE user_details SET profilepicpath = $1 WHERE userID = $2', [profilepicpath,userID], (err, result) => {
         if (err) {
             console.log(err);
         }
         else {
-            res.send(req.body);
+            res.send({profilepicpath:profilepicpath});
         }
     });
 });
@@ -227,7 +226,7 @@ router.get("/post/:user_id", (req, res) => {
 // 3. send all subscriptions
 router.get("/subscription/all/:userid", (req, res) => {
     const user = req.params.userid;
-    db.query('SELECT mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfilePic  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
+    db.query('SELECT subscriptionid as subsid, mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfilePic  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -239,7 +238,7 @@ router.get("/subscription/all/:userid", (req, res) => {
 
 router.get("/subscription/:userid", (req, res) => {
     const userID = req.params.userid;
-    db.query('SELECT ProfilePicPath as mentorProfilePic,userName as mentorName,mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription,user_details where mentorid = $1 and user_details.userId = $1',[userID], (err, result) => {
+    db.query('SELECT subscriptionid as subsid,ProfilePicPath as mentorProfilePic,userName as mentorName,mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription,user_details where mentorid = $1 and user_details.userId = $1',[userID], (err, result) => {
         if (err) {
             console.log(err);
         }
