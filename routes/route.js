@@ -89,7 +89,6 @@ router.post("/signup", (req, res) => {
 
 // 1.1 post req for sign up with profile pic
 router.post("/update/profilepic", uploadProfile.single('image'), (req, res) => {
-    console.log(req.file);
     const userID = req.body.userId;
     const profilepicpath = "./" + req.file.path;
     db.query('UPDATE user_details SET profilepicpath = $1 WHERE userID = $2', [profilepicpath,userID], (err, result) => {
@@ -132,8 +131,6 @@ router.post("/user/post" , (req, res) => {
 // 2.1 upload post with image
 router.post("/user/post/image" ,uploadPost.single('image'), (req, res) => {
 
-    console.log(req.file);
-    console.log(req.body);
     const userID = req.body.userId;
     const postDescr = req.body.postDesc;
     const postDate = new Date();
@@ -186,10 +183,9 @@ router.post("/user/subscription", (req, res) => {
 
  // 3. add user subscribed to a subscription
 
- router.post("/subscribe", (req, res) => {
-
-    const subscriptionID = req.body.subscriptionId;
-    const userID = req.body.userId;
+ router.post("/subscribe/:userId/:subsId", (req, res) => {
+    const subscriptionID = req.params.subsId;
+    const userID = req.params.userId;
     var default_rating = 5;
 
     db.query('INSERT INTO user_subscription (subscriptionID,userID,userRating) VALUES ($1, $2,$3)', [subscriptionID, userID, default_rating], (err, result) => {
@@ -247,7 +243,7 @@ router.get("/post/:user_id", (req, res) => {
 // 3. send all subscriptions
 router.get("/subscription/all/:userid", (req, res) => {
     const user = req.params.userid;
-    db.query('SELECT subscriptionid as subsid, mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfilePic  FROM subscription,user_details where mentorID = userID and mentorID <> $1', [user], (err, result) => {
+    db.query('SELECT subscriptionid as subsid, mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price,username as mentorname,ProfilePicPath as mentorProfilePic FROM subscription,user_details where mentorID = userID and mentorID <> $1 and subscriptionID not in (select subscriptionID from user_subscription where userId=$1)', [user], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -271,12 +267,11 @@ router.get("/subscription/:userid", (req, res) => {
 
 router.get("/subscription/taken/:user_id", (req, res) => {
     const user_id = req.params.user_id;
-    db.query('SELECT * FROM subscription where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1)', [user_id], (err, result) => {
+    db.query('SELECT subscriptionid as subsid,ProfilePicPath as mentorProfilePic,userName as mentorName,mentorID as mentorId,title,catagory as category,subsDescr as subsDesc,price FROM subscription,user_details where subscriptionID IN (SELECT subscriptionID FROM user_subscription WHERE userID = $1) and mentorID = userID', [user_id], (err, result) => {
         if (err) {
-            // console.log(err);
-            console.log(result);
+            console.log(err);
         }
-       
+
         res.send(result.rows);
     });
 });
@@ -311,12 +306,10 @@ router.get("/exercise", async (req, res) => {
 
 router.get("/exercise/:title", (req,res) => {
     const title = req.params.title;
-    console.log(title);
     db.query('SELECT * FROM exercise WHERE title = $1', [title], (err, result) => {
         if (err) {
             console.log(err);
         }
-        console.log(result.rows);
         res.send(result.rows[0]);
     });
     
@@ -339,7 +332,6 @@ router.delete("/post/delete/:postId/:userId", (req, res) => {
         }
         else {
             var postimgpath = "./" + result.rows[0].postimgpath;
-            console.log(postimgpath);
         }
     });
 
@@ -372,9 +364,9 @@ router.delete("/subscription/delete/:subsId/:userId", (req, res) => {
 
 // 3. delete a subscription taken by user given subscriptionID and userID
 
-router.delete("/unsubscribe", (req, res) => {
-    const subscriptionID = req.body.subscriptionId;
-    const userID = req.body.userId;
+router.post("/unsubscribe/:userId/:subsId", (req, res) => {
+    const subscriptionID = req.params.subsId;
+    const userID = req.params.userId;
 
     db.query('DELETE FROM user_subscription WHERE subscriptionId = $1 AND userID = $2', [subscriptionID, userID], (err, result) => {
         if (err) {
