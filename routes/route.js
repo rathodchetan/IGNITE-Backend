@@ -55,8 +55,10 @@ router.get("/db", (req, res) => {
 
 //1. post req for sign up
 router.post("/signup", (req, res) => {
-
+    console.log(req.body);
+    if(req.body.id == ''){res.send(req.body);return};
     const userID = req.body.id;
+    if(req.body.name==null)req.body.name = '';
     const username = req.body.name;
     const profilepicpath = '';
     db.query('select * from user_details where userID = $1', [userID], (err, result) => {
