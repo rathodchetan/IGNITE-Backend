@@ -334,7 +334,9 @@ router.delete("/post/delete/:postId/:userId", (req, res) => {
         }
         else {
             var postimgpath = result.rows[0].postimgpath;
-            fs.unlinkSync(postimgpath);
+            if(fs.existsSync(postimgpath)){
+                fs.unlinkSync(postimgpath);
+            }
         }
     });
 
