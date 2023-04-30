@@ -4,6 +4,7 @@ const app = express();
 const routes = require('./routes/route.js');
 var httpServer = require('http').Server(app);
 var socketServer = require('socket.io')(httpServer);
+const ipaddr = require('ip');
 
 
 require('dotenv').config();
@@ -15,7 +16,7 @@ app.use('/api/images/gif',express.static('images/gif/'));
 app.use('/api/images/post',express.static('images/post/'));
 app.use('/api/images/profile',express.static('images/profile/'));
 
-ip = "192.168.1.103"
+ip = ipaddr.address()
 port = 3000
 
 // app.listen(3000, () => {
